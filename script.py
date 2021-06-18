@@ -1,5 +1,6 @@
 import os.path
 import pandas as pd
+import datetime
 
 
 def df_from_file(file_name, sep='\t'):
@@ -57,7 +58,7 @@ def get_time_stamp(data):
     return time_stamp
 
 
-def get_temp_humid(data,time_stamp):
+def get_temp_humid(data, time_stamp):
     """get temperature humidity data with time stamps"""
     reid_df = data.reset_index()
     reid_df = reid_df[['index', 'Temperature ', 'Humidity ', 'Heat Index']]
@@ -79,14 +80,37 @@ def get_temp_humid(data,time_stamp):
     return df
 
 
-if __name__ == '__main__':
+def time_dependent_data(data, timeofday=''):
+    """get day time data only: day time 0601 - 1800, night time 1801 - 0600"""
 
+    t1 = datetime.time(6, 0, 1)
+    t2 = datetime.time(18, 0, 0)
+    t3 = datetime.time(18, 0, 1)
+    t4 = datetime.time(6, 0, 0)
+    if timeofday == 'day':
+        time_points = [True if stamp.time() > t1 and stamp.time() < t2 else False for stamp in data['Time']]
+    elif timeofday == 'night':
+        time_points = [True if stamp.time() > t3 or stamp.time() < t4 else False for stamp in data['Time']]
+    else:
+        time_points = [True for _ in data['Time']]
+
+    dn_data = [full_data[['Time', 'Temperature', 'Humidity', 'Heat Index']].iloc[indx]
+               for indx, bl_ind in enumerate(time_points) if bl_ind]
+    dn_data = pd.DataFrame(dn_data)
+    dn_data = dn_data.reset_index()
+    return dn_data
+
+
+if __name__ == '__main__':
     """collect data from file"""
     # os.chdir("C:\\Users\\Shyam\\Documents\\datavisual")
     data_file = os.path.join(os.getcwd(), 'data\\temperature.txt')
     dframe = df_from_file(data_file)  # get data in file as dataframe
     time_data = get_time_stamp(dframe)
     full_data = get_temp_humid(dframe, time_data)  # get temperature humidity data with time stamps
+
+    day_data = time_dependent_data(full_data, timeofday='day')  # day time data (after sunrise and before sunset)
+    night_data = time_dependent_data(full_data, timeofday='night')  # night time data (after sunset and before sunrise)
 
     # get time series visuals
     # function to plot complete time visuals
