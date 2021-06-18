@@ -45,9 +45,15 @@ def get_time_stamp(data):
     date = pd.to_datetime(date)
     date = date.reset_index()
     date = date.rename(columns={0: 'Date'})
-    time_stamp = pd.concat({'time index': date['index'],
-                            'Date': date['Date'],
-                            'Time': time_only}, axis=1)
+    nrows = len(time_only)
+    x = [(date['index'].iloc[indx], date['Date'].iloc[indx].replace(hour=time_only.iloc[indx].hour,
+                                                                    minute=time_only.iloc[indx].minute,
+                                                                    second=time_only.iloc[indx].second))
+         for indx in range(0, nrows) if not pd.isnull(time_only.iloc[indx])]
+    (indices, time_stamps) = zip(*x)
+    time_stamp = pd.concat({'time index': pd.Series(indices),
+                            'Time': pd.Series(time_stamps)}, axis=1)
+
     return time_stamp
 
 
@@ -57,17 +63,29 @@ def get_temp_humid(data,time_stamp):
     reid_df = reid_df[['index', 'Temperature ', 'Humidity ', 'Heat Index']]
     reid_df = reid_df.rename(columns={'Temperature ': 'Temperature', 'Humidity ': 'Humidity'})
     reid_df[['Temperature', 'Humidity', 'Heat Index']].astype('float64')
-    df = pd.concat([time_stamp, reid_df], axis=1)
-    df = df[df['time index'] == df['index']][['Date', 'Time', 'Temperature', 'Humidity', 'Heat Index']]
+
+    time_points, temp, humid, heatind = [], [], [], []
+    for id1, indx1 in enumerate(time_stamp['time index']):
+        for id2, indx2 in enumerate(reid_df['index']):
+            if indx1 == indx2:
+                time_points.append(time_stamp['Time'].iloc[id1])
+                temp.append(float(reid_df['Temperature'].iloc[id2]))
+                humid.append(float(reid_df['Humidity'].iloc[id2]))
+                heatind.append(float(reid_df['Heat Index'].iloc[id2]))
+            else:
+                continue
+    df = pd.concat({'Time': pd.Series(time_points), 'Temperature': pd.Series(temp), 'Humidity': pd.Series(humid),
+                    'Heat Index': pd.Series(heatind)}, axis=1)
     return df
 
 
 if __name__ == '__main__':
+
+    """collect data from file"""
     # os.chdir("C:\\Users\\Shyam\\Documents\\datavisual")
     data_file = os.path.join(os.getcwd(), 'data\\temperature.txt')
     dframe = df_from_file(data_file)  # get data in file as dataframe
     time_data = get_time_stamp(dframe)
-
     full_data = get_temp_humid(dframe, time_data)  # get temperature humidity data with time stamps
 
     # get time series visuals
