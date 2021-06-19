@@ -2,6 +2,7 @@ import os.path
 import pandas as pd
 import datetime
 from frameromdata import df_from_file, get_time_stamp, get_temp_humid
+from plotdata import scatterplot
 
 
 def time_dependent_data(data, timeofday=''):
@@ -21,7 +22,7 @@ def time_dependent_data(data, timeofday=''):
     dn_data = [full_data[['Time', 'Temperature', 'Humidity', 'Heat Index']].iloc[indx]
                for indx, bl_ind in enumerate(time_points) if bl_ind]
     dn_data = pd.DataFrame(dn_data)
-    dn_data = dn_data.reset_index()
+    dn_data = dn_data.reset_index(drop=True)
     return dn_data
 
 
@@ -39,6 +40,8 @@ if __name__ == '__main__':
     # get monthly data for each year (mean with min and max) box plots
 
     # get time series visuals
+    scatterplot(day_data, 'Temperature')
+
     # function to plot complete time visuals
     # function to plot day time only data
     # function to plot night time only data (for both temp and humidity)
