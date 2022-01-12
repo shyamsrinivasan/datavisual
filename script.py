@@ -26,6 +26,29 @@ def time_dependent_data(data, timeofday=''):
     return dn_data
 
 
+def combinedatafiles(datafiles, newfile=''):
+    """Combine two or more data files into single file"""
+    fin = False
+
+    for file in datafiles:
+        with open(file, 'r') as f:
+            if newfile:
+                with open(newfile, 'a') as nf:
+                    for line in f:
+                        nf.write(line)
+                    nf.close()
+            else:
+                newfile = os.path.join(os.getcwd(), 'data\\combined_data.txt')
+                with open(newfile, 'a') as nf:
+                    for line in f:
+                        nf.write(line)
+                    nf.close()
+            f.close()
+            fin = True
+
+    return fin
+
+
 if __name__ == '__main__':
     """collect data from file"""
     # os.chdir("C:\\Users\\Shyam\\Documents\\datavisual")
@@ -39,8 +62,13 @@ if __name__ == '__main__':
 
     # get monthly data for each year (mean with min and max) box plots
 
+    # file operations test
+    all_datafiles = [os.path.join(os.getcwd(), 'data\\Apr21_Jun10_2021.txt'),
+                     os.path.join(os.getcwd(), 'data\\Jun10_Dec20_2021.txt')]
+    flag = combinedatafiles(all_datafiles, os.path.join(os.getcwd(), 'data\\combined_data.txt'))
+
     # get time series visuals
-    scatterplot(day_data, 'Temperature')
+    scatterplot(day_data, dtype='all', sep=True)
 
     # function to plot complete time visuals
     # function to plot day time only data
