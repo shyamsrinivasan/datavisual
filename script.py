@@ -26,6 +26,28 @@ def time_dependent_data(data, timeofday=''):
     return dn_data
 
 
+def get_monthly_data(data, nmonths=12):
+    """get monthly data for each year (mean with min and max) box plots"""
+
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+              'November', 'December']
+    ndata = len(full_data)
+    parsed_data = [[data[['Time', 'Temperature', 'Humidity', 'Heat Index']].iloc[indx] for indx in range(0, ndata) if data['Time'].iloc[indx].month == imnth]
+                   for imnth in range(1, 13)]
+    parsed_df = [pd.DataFrame(idata) if idata else pd.DataFrame([]) for idata in parsed_data]
+    if 0 <= nmonths <= 11:     # get only nth month data
+        monthly_data = {months[imonth]: idata.reset_index(drop=True) for imonth, idata in enumerate(parsed_df)
+                        if imonth == nmonths and not idata.empty}
+    else:               # get monthly data for all months/years (for which data is available)
+        monthly_data = {months[imonth]: idata.reset_index(drop=True)
+                        for imonth, idata in enumerate(parsed_df) if not idata.empty}
+
+    # get data stats for each month
+    # stats = {imonth: [] for (imonth, idata) in monthly_data.items()}
+    #     min_temp = idata
+    return monthly_data
+
+
 def combinedatafiles(datafiles, newfile=''):
     """Combine two or more data files into single file"""
     fin = False
@@ -61,6 +83,7 @@ if __name__ == '__main__':
     night_data = time_dependent_data(full_data, timeofday='night')  # night time data (after sunset or before sunrise)
 
     # get monthly data for each year (mean with min and max) box plots
+    monthly_data = get_monthly_data(full_data)
 
     # file operations test
     all_datafiles = [os.path.join(os.getcwd(), 'data\\Apr21_Jun10_2021.txt'),
